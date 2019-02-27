@@ -113,11 +113,13 @@ class UList1 : public RegList1<UReg1> {
 
 class MeasureEventMsg : public Message {
   public:
-    void init(uint8_t msgcnt, uint8_t channel, int32_t weight) {
-      Message::init(0x0F, msgcnt, 0x53, (msgcnt % 20 == 1) ? BIDI : BCAST, channel & 0xff, (weight >> 24) & 0x7f);
-      pload[0] = (weight >> 16) & 0xff;
-      pload[1] = (weight >> 8) & 0xff;
-      pload[2] = (weight) & 0xff;
+    void init(uint8_t msgcnt, uint8_t channel, int32_t weight, bool batlow, uint8_t volt) {
+      Message::init(0x10, msgcnt, 0x53, (msgcnt % 20 == 1) ? BIDI : BCAST, batlow ? 0x80 : 0x00, channel & 0xff );
+      pload[0] = (weight >> 24) & 0x7f;
+      pload[1] = (weight >> 16) & 0xff;
+      pload[2] = (weight >> 8) & 0xff;
+      pload[3] = (weight) & 0xff;
+      pload[4] = (volt)   & 0xff;
     }
 };
 
@@ -146,7 +148,7 @@ class MeasureChannel : public Channel<Hal, UList1, EmptyList, List4, PEERS_PER_C
         last_flags = flags();
       }
       tick = delay();
-      msg.init(device().nextcount(), number(), weight);
+      msg.init(device().nextcount(), number(), weight, device().battery().low(), device().battery().current());
       device().sendPeerEvent(msg, *this);
       sysclock.add(*this);
     }
