@@ -82,7 +82,7 @@ class UList0 : public RegList0<UReg0> {
     }
 };
 
-DEFREGISTER(UReg1, 0x01, 0x02, 0x03, 0x04)
+DEFREGISTER(UReg1, 0x01, 0x02, 0x03, 0x04,0x05)
 class UList1 : public RegList1<UReg1> {
   public:
     UList1 (uint16_t addr) : RegList1<UReg1>(addr) {}
@@ -105,9 +105,17 @@ class UList1 : public RegList1<UReg1> {
           ;
     }
 
+    bool TaraOnRestart (uint8_t value) const {
+      return this->writeRegister(0x05, 0x01, 0, value & 0xff);
+    }
+    bool TaraOnRestart () const {
+      return this->readRegister(0x05, 0x01, 0, false);
+    }
+
     void defaults () {
       clear();
       Tara(0);
+      TaraOnRestart(false);
     }
 };
 
