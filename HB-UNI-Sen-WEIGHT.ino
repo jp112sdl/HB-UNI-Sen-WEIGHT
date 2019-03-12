@@ -24,6 +24,12 @@
 // Arduino pin for the config button
 #define CONFIG_BUTTON_PIN  8
 #define LED_PIN            4
+#define HX711_SCK_PIN      A4
+#define HX711_DOUT_PIN     A5
+
+#define HX711_CALIBRATION 873.58f
+#define HX711_OFFSET     -43556L
+#define AVERAGE_READ_COUNT 20
 
 // number of available peers per channel
 #define PEERS_PER_CHANNEL  6
@@ -133,19 +139,20 @@ class MeasureEventMsg : public Message {
 
 class MeasureChannel : public Channel<Hal, UList1, EmptyList, List4, PEERS_PER_CHANNEL, UList0>, public Alarm {
     MeasureEventMsg msg;
-    int32_t        weight;
-    uint8_t        last_flags = 0xff;
+    int32_t         weight;
+    uint8_t         last_flags = 0xff;
+    HX711           hx711;
 
   public:
     MeasureChannel () : Channel(), Alarm(0), weight(0) {}
     virtual ~MeasureChannel () {}
 
     void measure() {
-
-      weight = -52998;//random(-100,5000000);
+      hx711.power_up();
+      weight = (int32_t)(hx711.get_units(AVERAGE_READ_COUNT) * 100.0);
       weight += this->getList1().Tara();
       DPRINT(F("weight: ")); DDECLN(weight);
-
+      hx711.power_down();
     }
 
     virtual void trigger (__attribute__ ((unused)) AlarmClock& clock) {
@@ -162,16 +169,37 @@ class MeasureChannel : public Channel<Hal, UList1, EmptyList, List4, PEERS_PER_C
     }
 
     uint32_t delay () {
-      uint16_t d = (max(10, device().getList0().Sendeintervall()) * SYSCLOCK_FACTOR) + random(10); //add some small random difference between channels
-      return seconds2ticks(d);
+      return seconds2ticks((max(10, device().getList0().Sendeintervall()) * SYSCLOCK_FACTOR));
     }
 
     virtual void configChanged() {
-      DPRINT("*Tara: "); DDECLN(this->getList1().Tara());
+      DPRINT(F("*Tara: ")); DDECLN(this->getList1().Tara());
     }
 
     void setup(Device<Hal, UList0>* dev, uint8_t number, uint16_t addr) {
       Channel::setup(dev, number, addr);
+      DPRINT(F("Init HX711"));
+      hx711.begin(HX711_DOUT_PIN, HX711_SCK_PIN);
+      for (uint8_t chk = 0; chk < 10; chk++) {
+        DPRINT(F("."));
+        if (hx711.is_ready()) {
+          DPRINTLN(F(" OK"));
+          hx711.set_scale(HX711_CALIBRATION * 1.0); //(to ensure that it is a float)
+          bool ToR=this->getList1().TaraOnRestart();
+          DPRINT("Tara on Restart = ");DDECLN(ToR);
+          if (ToR == true)
+            hx711.tare();
+          else
+            hx711.set_offset(HX711_OFFSET);
+          hx711.power_down();
+          break;
+        }
+        if (chk == 9) {
+          DPRINTLN(F(" ERR"));
+          while(1) {}
+        }
+        _delay_ms(100);
+      }
       sysclock.add(*this);
     }
 
