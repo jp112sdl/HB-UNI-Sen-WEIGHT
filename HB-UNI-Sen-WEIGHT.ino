@@ -53,7 +53,7 @@ const struct DeviceInfo PROGMEM devinfo = {
 /**
    Configure the used hardware
 */
-typedef AskSin<StatusLed<LED_PIN>, BatterySensor, Radio<AvrSPI<10, 11, 12, 13>, 2>> BaseHal;
+typedef AskSin<StatusLed<LED_PIN>, BatterySensorUni<A1,5>, Radio<AvrSPI<10, 11, 12, 13>, 2>> BaseHal;
 class Hal : public BaseHal {
   public:
     void init (const HMID& id) {
