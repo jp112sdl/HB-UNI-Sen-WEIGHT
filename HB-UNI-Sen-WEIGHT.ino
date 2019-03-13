@@ -140,15 +140,22 @@ class MeasureEventMsg : public Message {
 class MeasureChannel : public Channel<Hal, UList1, EmptyList, List4, PEERS_PER_CHANNEL, UList0>, public Alarm {
     MeasureEventMsg msg;
     int32_t         weight;
-    uint8_t         last_flags = 0xff;
+    uint8_t         last_flags;
+    bool            first;
     HX711           hx711;
 
   public:
-    MeasureChannel () : Channel(), Alarm(0), weight(0) {}
+    MeasureChannel () : Channel(), Alarm(0), weight(0), last_flags(0xff), first(true) {}
     virtual ~MeasureChannel () {}
 
     void measure() {
       hx711.power_up();
+      if (first) {
+        first = false;
+        bool ToR=this->getList1().TaraOnRestart();
+        DPRINT("Tara on Restart: ");DDECLN(ToR);
+        (ToR == true) ? hx711.tare(AVERAGE_READ_COUNT) : hx711.set_offset(HX711_OFFSET);
+      }
       weight = (int32_t)(hx711.get_units(AVERAGE_READ_COUNT) * 100.0);
       weight += this->getList1().Tara();
       DPRINT(F("weight: ")); DDECLN(weight);
@@ -173,7 +180,7 @@ class MeasureChannel : public Channel<Hal, UList1, EmptyList, List4, PEERS_PER_C
     }
 
     virtual void configChanged() {
-      DPRINT(F("*Tara: ")); DDECLN(this->getList1().Tara());
+      DPRINT(F("*man. Tara     : ")); DDECLN(this->getList1().Tara());
     }
 
     void setup(Device<Hal, UList0>* dev, uint8_t number, uint16_t addr) {
@@ -185,12 +192,6 @@ class MeasureChannel : public Channel<Hal, UList1, EmptyList, List4, PEERS_PER_C
         if (hx711.is_ready()) {
           DPRINTLN(F(" OK"));
           hx711.set_scale(HX711_CALIBRATION * 1.0); //(to ensure that it is a float)
-          bool ToR=this->getList1().TaraOnRestart();
-          DPRINT("Tara on Restart = ");DDECLN(ToR);
-          if (ToR == true)
-            hx711.tare();
-          else
-            hx711.set_offset(HX711_OFFSET);
           hx711.power_down();
           break;
         }
