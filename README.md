@@ -29,3 +29,8 @@
 ![img1](Images/CCU_Bedienung.png)
 
 ![img2](Images/CCU_Einstellungen.png)
+
+#### Zubehör
+
+Eine passende Wägefläche gibts bei [Thingiverse](https://www.thingiverse.com/thing:3129439):
+<img src="https://cdn.thingiverse.com/renders/1e/59/75/9c/ef/8bc3f2ca900a86df486cca200cd56d22_preview_featured.jpg">
