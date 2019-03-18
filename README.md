@@ -14,6 +14,9 @@
 #### Kalibrierung
 - [Kalibrierungssketch](https://raw.githubusercontent.com/jp112sdl/HB-UNI-Sen-WEIGHT/master/Calibration/Calibration.ino) flashen
 - Anweisungen im [seriellen Monitor](https://asksinpp.de/Grundlagen/FAQ/Debugging.html#serieller-monitor) (57600 Baud!) folgen
+  - es wird ein bekanntes Gewicht benötigt. z.B. ein Glas Wasser mit der Küchenwaage wiegen und Gewicht notieren
+  - bei der Eingabe des Gewichts im seriellen Monitor ist das Dezimalkomma (,) durch einen Punkt (.) zu ersetzen
+    - 234,4 Gramm -> Eingabe: 234.4
 - am Ende werden 2 Kalibrierwerte ausgegeben, z.B.
 ```
 #define HX711_CALIBRATION 873.58f
