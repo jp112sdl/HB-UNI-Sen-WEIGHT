@@ -5,6 +5,7 @@
 - [CC1101 Funkmodul](https://de.aliexpress.com/item/CC1101-Drahtlose-Modul-Fern-bertragung-Antenne-868-mhz-SPI-Interface-Low-Power-M115-F-r-FSK/32924239954.html)
 - Wägesensor [HX711 mit 1kg Load Cell](https://de.aliexpress.com/item/W-gezelle-1-KG-5-KG-10-KG-20-KG-HX711-AD-Modul-Gewicht-Sensor-Elektronische/32958628401.html) (bis 50kg möglich)
 - LED, Taster, Widerstände (100k, 470k, 330)
+- [3.3V StepUp Converter](https://www.ebay.de/itm/382058974507)
 
 
 #### Verdrahtung
