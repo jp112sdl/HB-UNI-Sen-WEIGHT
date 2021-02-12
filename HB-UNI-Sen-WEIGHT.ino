@@ -5,6 +5,7 @@
 //- -----------------------------------------------------------------------------------------------------------------------
 // define this to read the device id, serial and device type from bootloader section
 // #define USE_OTA_BOOTLOADER
+// ci-test=yes board=328p aes=no
 
 // https://github.com/bogde/HX711
 // https://learn.sparkfun.com/tutorials/load-cell-amplifier-hx711-breakout-hookup-guide/all
