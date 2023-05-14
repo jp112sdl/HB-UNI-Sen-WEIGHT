@@ -32,6 +32,8 @@
 #define HX711_OFFSET     -43556L
 #define AVERAGE_READ_COUNT 20
 
+#define MANUAL_MEASURE_BTN 9
+
 // number of available peers per channel
 #define PEERS_PER_CHANNEL  6
 
@@ -149,7 +151,7 @@ class MeasureChannel : public Channel<Hal, UList1, EmptyList, List4, PEERS_PER_C
     MeasureChannel () : Channel(), Alarm(0), weight(0), last_flags(0xff), first(true) {}
     virtual ~MeasureChannel () {}
 
-    void measure() {
+    void measureAndSend() {
       hx711.power_up();
       if (first) {
         first = false;
@@ -161,21 +163,22 @@ class MeasureChannel : public Channel<Hal, UList1, EmptyList, List4, PEERS_PER_C
       weight += this->getList1().Tara();
       DPRINT(F("weight: ")); DDECLN(weight);
       hx711.power_down();
-    }
-
-    virtual void trigger (__attribute__ ((unused)) AlarmClock& clock) {
-      uint8_t msgcnt = device().nextcount();
-      measure();
 
       if (last_flags != flags()) {
         if (number() == 1) this->changed(true);
         last_flags = flags();
       }
-      tick = delay();
+      uint8_t msgcnt = device().nextcount();
+
       msg.init(msgcnt, number(), weight, device().battery().low(), device().battery().current());
       if (msgcnt % 20 == 1) device().sendPeerEvent(msg, *this); else device().broadcastEvent(msg, *this);
-      sysclock.add(*this);
     }
+
+    virtual void trigger (__attribute__ ((unused)) AlarmClock& clock) {
+      tick = delay();
+      sysclock.add(*this);
+      measureAndSend();
+     }
 
     uint32_t delay () {
       return seconds2ticks((max(10, device().getList0().Sendeintervall()) * SYSCLOCK_FACTOR));
@@ -231,13 +234,29 @@ class UType : public MultiChannelDevice<Hal, MeasureChannel, 1, UList0> {
     }
 };
 
+class MeasureButton : public StateButton<HIGH,LOW,INPUT_PULLUP> {
+  UType& device;
+public:
+  typedef StateButton<HIGH,LOW,INPUT_PULLUP> ButtonType;
+  MeasureButton (UType& dev,uint8_t longpresstime=10) : device(dev) { this->setLongPressTime(seconds2ticks(longpresstime)); }
+  virtual ~MeasureButton () {}
+  virtual void state (uint8_t s) {
+    ButtonType::state(s);
+    if( s == ButtonType::released ) {
+      device.channel(1).measureAndSend();
+    }
+  }
+};
+
 UType sdev(devinfo, 0x20);
 ConfigButton<UType> cfgBtn(sdev);
+MeasureButton measureBtn(sdev);
 
 void setup () {
   DINIT(57600, ASKSIN_PLUS_PLUS_IDENTIFIER);
   sdev.init(hal);
   buttonISR(cfgBtn, CONFIG_BUTTON_PIN);
+  buttonISR(measureBtn, MANUAL_MEASURE_BTN);
   sdev.initDone();
 }
 
